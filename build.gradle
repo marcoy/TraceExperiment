@@ -25,6 +25,7 @@ ext {
     guavaVersion  = '18.0'
     jvmBreakglass = '0.0.7'
     springVersion = '4.1.2.RELEASE'
+    commonsIOVersion = '2.4'
 }
 
 def jdkHome = System.getenv("JAVA_HOME")
@@ -33,6 +34,7 @@ mainClassName = "Main"
 dependencies {
     compile files("$jdkHome/lib/tools.jar")
     compile "com.google.guava:guava:${guavaVersion}"
+    compile "commons-io:commons-io:${commonsIOVersion}"
 //    compile "com.sun.tools.btrace:btrace-client:${btraceVersion}"
 //    compile "com.sun.tools.btrace:btrace-agent:${btraceVersion}"
 //    compile "com.sun.tools.btrace:btrace-boot:${btraceVersion}"
