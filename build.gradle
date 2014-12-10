@@ -1,0 +1,45 @@
+apply plugin: 'application'
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'com.github.ben-manes.versions'
+
+buildscript {
+    repositories {
+      jcenter()
+    }
+
+    dependencies {
+        classpath 'com.github.ben-manes:gradle-versions-plugin:0.6'
+        classpath files("${System.properties['java.home']}/lib/tools.jar")
+    }
+}
+
+repositories {
+    jcenter()
+    mavenLocal()
+    maven { url "https://clojars.org/repo" }
+}
+
+ext {
+    btraceVersion = '1.2.5.1'
+    guavaVersion  = '18.0'
+    jvmBreakglass = '0.0.7'
+    springVersion = '4.1.2.RELEASE'
+}
+
+def jdkHome = System.getenv("JAVA_HOME")
+mainClassName = "Main"
+
+dependencies {
+    compile files("$jdkHome/lib/tools.jar")
+    compile "com.google.guava:guava:${guavaVersion}"
+    compile "com.sun.tools.btrace:btrace-client:${btraceVersion}"
+    compile "com.sun.tools.btrace:btrace-agent:${btraceVersion}"
+    compile "com.sun.tools.btrace:btrace-boot:${btraceVersion}"
+    compile "net.matlux:jvm-breakglass:${jvmBreakglass}"
+    compile "org.slf4j:slf4j-api:1.7.7"
+    compile "org.springframework:spring-core:${springVersion}"
+    compile "org.springframework:spring-beans:${springVersion}"
+    compile "org.springframework:spring-context:${springVersion}"
+    testCompile "junit:junit:4.12"
+}
