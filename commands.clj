@@ -103,14 +103,14 @@
 ;; Number Data
 ;; ----------------------------------------------------------------------------
 (defn number-data-command
-  ([n v] {:type 9 :name n :value value})
+  ([n v] {:type 9 :name n :value v})
   ([] (number-data-command nil 0)))
 
 (defmethod readbytes 9
   [cmd-type ois]
   (let [n (.readUTF ois)
-        v (.readObject ois)])
-  (number-data-command n v))
+        v (.readObject ois)]
+    (number-data-command n v)))
 
 (defmethod writebytes 9
   [cmd oos]
@@ -145,6 +145,9 @@
 
 (defmethod writebytes 6
   [cmd oos])
+
+(defmethod printcmd 6
+  [cmd ^PrintWriter out])
 
 
 ;; ----------------------------------------------------------------------------
