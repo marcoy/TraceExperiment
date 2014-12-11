@@ -199,9 +199,3 @@
 (defmethod readbytes :default
   [cmd-type ois]
   {:type cmd-type})
-
-
-(defn exit-command
-  [bytecode]
-  {:type 2})
-
