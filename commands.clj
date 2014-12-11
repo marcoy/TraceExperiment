@@ -119,6 +119,7 @@
   (let [n (if-some [maybe-n (:name cmd)] maybe-n "")
         v (:value cmd)]
     (do
+      (.writeByte oos (byte (:type cmd)))
       (.writeUTF oos n)
       (.writeObject oos v)
       (.flush oos))))
@@ -167,7 +168,28 @@
 (defmethod writebytes 0
   [cmd oos]
   (let [cause (:cause cmd)]
+    (.writeByte oos (byte (:type cmd)))
     (.writeObject oos cause)
+    (.flush oos)))
+
+
+;; ----------------------------------------------------------------------------
+;; Exit
+;; ----------------------------------------------------------------------------
+(defn exit-command
+  ([c] (:type 2 :exit-code c))
+  ([] (exit-command 0)))
+
+(defmethod readbytes 2
+  [cmd ois]
+  (let [exit-code (.readInt ois)]
+    (exit-command exit-code)))
+
+(defmethod writebytes 2
+  [cmd oos]
+  (do
+    (.writeByte oos (byte (:type cmd)))
+    (.writeInt oos (:exit-command cmd))
     (.flush oos)))
 
 
