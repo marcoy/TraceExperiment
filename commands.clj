@@ -1,4 +1,5 @@
 (import 'java.io.PrintWriter)
+(import '[org.apache.commons.io IOUtils])
 (defonce type->int
   {:error 0
    :event 1
@@ -87,7 +88,8 @@
         len (.readInt ois)
         bytebuffer (byte-array len)
         bytes-read (.read ois bytebuffer 0 len)
-        msg (apply str (map char bytebuffer))]
+        ; msg (apply str (map char bytebuffer))
+        msg (IOUtils/toString bytebuffer)]
     (message-command t msg)))
 
 (defmethod writebytes 4

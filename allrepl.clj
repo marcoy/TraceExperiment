@@ -2,7 +2,6 @@
 (import 'java.lang.management.ManagementFactory)
 (import '[java.io File PrintWriter ObjectOutputStream ObjectInputStream])
 (import '[java.net Socket])
-(import '[javax.tools ToolProvider DiagnosticCollector])
 (import 'java.util.concurrent.Executors)
 (import '[org.apache.commons.io IOUtils])
 (require '[clojure.java.io :as io])
