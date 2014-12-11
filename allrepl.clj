@@ -72,22 +72,30 @@ th=/Users/myuen/.jenv/versions/oracle64-1.8.0.25/lib/tools.jar,probeDescPath=.")
 (defonce membytecode (IOUtils/toByteArray (io/input-stream "Memory.class")))
 
 (defn submit []
-  (let [bytecode (IOUtils/toByteArray (io/input-stream "Memory.class"))
+  (let [_ (load-agent)
+        bytecode (IOUtils/toByteArray (io/input-stream "Memory.class"))
         sock (Socket. "localhost" 3030)
         oos (ObjectOutputStream. (.getOutputStream sock))
         ois (ObjectInputStream. (.getInputStream sock))
-        ic (InstrumentCommand. bytecode)
+        ic (instrument-command bytecode [])
         printThreadExec (Executors/newSingleThreadExecutor)]
     (writebytes ic oos)
-    (.start (Thread. #(loop []
-                        ; TODO polymorphic dispatch
-                        (let [cmd-type (.readByte ois)
-                              runtime (.readLong ois)
-                              len (.readInt ois)
-                              buffer (byte-array len)
-                              message (.read ois buffer 0 len)]
-                          (println (String. buffer "utf-8")))
-                        (recur))))
+    (loop []
+      (let [cmd-type (.readByte ois)
+            cmd (readbytes cmd-type ois)]
+        (condp :type cmd
+          4 (printcmd cmd *out*)
+          (println cmd)))
+      (recur))
+    ; (.start (Thread. #(loop []
+    ;                     ; TODO polymorphic dispatch
+    ;                     (let [cmd-type (.readByte ois)
+    ;                           runtime (.readLong ois)
+    ;                           len (.readInt ois)
+    ;                           buffer (byte-array len)
+    ;                           message (.read ois buffer 0 len)]
+    ;                       (println (String. buffer "utf-8")))
+    ;                     (recur))))
     ; (.writeByte oos (byte 3))
     ; (.writeInt oos (count bytecode))
     ; (.write oos bytecode)
