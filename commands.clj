@@ -141,6 +141,24 @@
 
 
 ;; ----------------------------------------------------------------------------
+;; Rename Command
+;; ----------------------------------------------------------------------------
+(defn rename-command
+  [n]
+  {:type 5 :new-name n})
+
+(defmethod readbytes 5
+  [cmd-type ois]
+  (rename-command (.readUTF ois)))
+
+(defmethod writebytes 5
+  [cmd oos]
+  (do
+    (.writeByte oos (byte (:type cmd)))
+    (.writeUTF oos (:new-name cmd))
+    (.flush oos)))
+
+;; ----------------------------------------------------------------------------
 ;; Number Data
 ;; ----------------------------------------------------------------------------
 (defn number-data-command
