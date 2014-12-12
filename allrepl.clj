@@ -66,7 +66,7 @@
   (attach-jvm (jvm-pid)))
 
 (defn load-agent
-  "Load btrace agent. TODO: Need to move agent args as parameters"
+  "Load the btrace agent"
   [& {:keys [port debug unsafe systemClassPath bootClassPath trackRetransforms probeDescPath]
       :as arg-params}]
   (let [default-args {:port 3030 :debug true :unsafe true :systemClassPath (find-toolsjar)
@@ -99,8 +99,6 @@
 ;; ============================================================================
 ;; Comm
 ;; ============================================================================
-(defonce membytecode (IOUtils/toByteArray (io/input-stream "Memory.class")))
-
 (defn submit []
   (let [_ (load-agent)
         bytecode (IOUtils/toByteArray (io/input-stream "Memory.class"))
