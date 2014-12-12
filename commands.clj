@@ -101,6 +101,45 @@
         msg (:msg cmd)]
     (.print out msg)))
 
+
+;; ----------------------------------------------------------------------------
+;; RetransformationStartNotification
+;; ----------------------------------------------------------------------------
+(defn retransformation-start-notification
+  [n]
+  {:type 11 :num-classes n})
+
+(defmethod readbytes 11
+  [cmd-type ois]
+  (retransformation-start-notification (.readInt ois)))
+
+(defmethod writebytes 11
+  [cmd oos]
+  (do
+    (.writeByte oos (byte (:type cmd)))
+    (.writeInt oos (:num-classes cmd))
+    (.flush oos)))
+
+
+;; ----------------------------------------------------------------------------
+;; RetransformClassNotification
+;; ----------------------------------------------------------------------------
+(defn retransform-class-notification
+  [class-name]
+  {:type 12 :class-name class-name})
+
+(defmethod readbytes 12
+  [cmd-type ois]
+  (retransform-class-notification (.readObject ois)))
+
+(defmethod writebytes 12
+  [cmd oos]
+  (do
+    (.writeByte oos (byte (:type cmd)))
+    (.writeObject oos (:class-name cmd))
+    (.flush oos)))
+
+
 ;; ----------------------------------------------------------------------------
 ;; Number Data
 ;; ----------------------------------------------------------------------------
