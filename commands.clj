@@ -96,10 +96,11 @@
   [cmd oos])
 
 (defmethod printcmd 4
-  [cmd ^PrintWriter out]
+  [cmd out]
   (let [t (:time cmd)
         msg (:msg cmd)]
-    (.print out msg)))
+    (.print out msg)
+    (.flush out)))
 
 
 ;; ----------------------------------------------------------------------------
@@ -162,7 +163,7 @@
 ;; Number Data
 ;; ----------------------------------------------------------------------------
 (defn number-data-command
-  ([n v] {:type 9 :name n :value v})
+  ([^String n ^Number v] {:type 9 :name n :value v})
   ([] (number-data-command nil 0)))
 
 (defmethod readbytes 9
@@ -234,7 +235,7 @@
 ;; Exit
 ;; ----------------------------------------------------------------------------
 (defn exit-command
-  ([c] (:type 2 :exit-code c))
+  ([c] {:type 2 :exit-code c})
   ([] (exit-command 0)))
 
 (defmethod readbytes 2
@@ -246,7 +247,7 @@
   [cmd oos]
   (do
     (.writeByte oos (byte (:type cmd)))
-    (.writeInt oos (:exit-command cmd))
+    (.writeInt oos (:exit-code cmd))
     (.flush oos)))
 
 

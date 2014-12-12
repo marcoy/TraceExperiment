@@ -8,7 +8,7 @@
 
 (load-file "commands.clj")
 
-(defn jvm-pid
+(defn ^String jvm-pid
   "Get the PID of the current JVM. Not portable. Use with caution."
   []
   (-> (.. ManagementFactory getRuntimeMXBean getName)
@@ -24,9 +24,6 @@
 (defonce bootjar-path (jar-path "btrace-boot.jar"))
 (defonce agentjar-path (jar-path "btrace-agent.jar"))
 (defonce clientjar-path (jar-path "btrace-client.jar"))
-(defonce toolsjar-path (clojure.string/join java.io.File/separator
-                          [(System/getProperty "java.home") ".." "lib" "tools.jar"]))
-
 
 (defn- get-toolsjar-classpath []
   (first (filter #(.endsWith % "tools.jar")
@@ -53,10 +50,45 @@
     (some #(when-some [toolsjar %] toolsjar)
           [toolsjar-classpath toolsjar-javahome toolsjar-guess])))
 
+
+;; ============================================================================
+;; Session
+;; ============================================================================
+(declare send-exit)
+(defonce session (atom nil))
+
+(defn close-session
+  [s]
+  (let [{:keys [sock ois oos writer]} s]
+    (do
+      (send-exit oos)
+      (.interrupt writer)
+      (reset! session nil))))
+
+(defn new-session
+  ([agent-port] (new-session agent-port *out*))
+  ([agent-port writer]
+   (do
+     (when-let [s @session]
+       (close-session s))
+     (let [sock (Socket. "localhost" agent-port)
+           oos (ObjectOutputStream. (.getOutputStream sock))
+           ois (ObjectInputStream. (.getInputStream sock))
+           writer-thread (Thread. #(loop []
+                                     (let [cmd-type (.readByte ois)
+                                           cmd (readbytes cmd-type ois)]
+                                       (condp contains? (:type cmd)
+                                         #{4 6 9} (printcmd cmd writer)
+                                         (println cmd)))
+                                     (recur)))]
+       (.start writer-thread)
+       (reset! session {:sock sock :ois ois :oos oos :writer writer-thread})))))
+
+
 ;; ============================================================================
 ;; Agent
 ;; ============================================================================
-;; for testing purpose
+; for testing purpose
 (defonce test-agent-args "port=3030,debug=true,unsafe=true,trackRetransforms=true,bootClassPath=/Users/myuen/.m2/repository/com/sun/tools/btrace/btrace-boot/1.2.5.1/btrace-boot-1.2.5.1.jar,systemClassPath=/Users/myuen/.jenv/versions/oracle64-1.8.0.25/lib/tools.jar,probeDescPath=.")
 
 (defn attach-jvm [^String pid]
@@ -96,12 +128,15 @@
 ;         javac-task (.getTask compiler out manager diagnostics opts nil comp-units)]
 ;     ))
 
+
 ;; ============================================================================
 ;; Comm
 ;; ============================================================================
-(defn submit []
+(defn submit
+  []
   (let [_ (load-agent)
-        bytecode (IOUtils/toByteArray (io/input-stream "Memory.class"))
+        ; bytecode (IOUtils/toByteArray (io/input-stream "Memory.class"))
+        bytecode (IOUtils/toByteArray (io/input-stream "TraceExp.class"))
         sock (Socket. "localhost" 3030)
         oos (ObjectOutputStream. (.getOutputStream sock))
         ois (ObjectInputStream. (.getInputStream sock))
@@ -111,22 +146,29 @@
     (loop []
       (let [cmd-type (.readByte ois)
             cmd (readbytes cmd-type ois)]
-        (cond
-          (contains? #{4 6 9} (:type cmd)) (printcmd cmd *out*)
-          :else (println cmd)))
+        (condp contains? (:type cmd)
+          #{4 6 9} (printcmd cmd *out*)
+          (println cmd)))
       (recur))
-    ; (.start (Thread. #(loop []
-    ;                     ; TODO polymorphic dispatch
-    ;                     (let [cmd-type (.readByte ois)
-    ;                           runtime (.readLong ois)
-    ;                           len (.readInt ois)
-    ;                           buffer (byte-array len)
-    ;                           message (.read ois buffer 0 len)]
-    ;                       (println (String. buffer "utf-8")))
-    ;                     (recur))))
-    ; (.writeByte oos (byte 3))
-    ; (.writeInt oos (count bytecode))
-    ; (.write oos bytecode)
-    ; (.writeInt oos (byte 0))
-    ; (.flush oos)
     sock))
+
+(defn instrument
+  []
+  (let [_ (load-agent)
+        bytecode (IOUtils/toByteArray (io/input-stream "TraceExp.class"))
+        ic (instrument-command bytecode [])
+        {:keys [sock ois oos]} (new-session 3030)]
+    (writebytes ic oos)))
+
+(defn send-cmd
+  "Send a command to the btrace agent"
+  [cmd oos]
+  (when (some? oos)
+    (do
+      (.reset oos)
+      (writebytes cmd oos))))
+
+(defn send-exit
+  ([]      (send-exit (:oos @session)))
+  ([oos]   (send-exit 0 oos))
+  ([c oos] (send-cmd (exit-command c) oos)))

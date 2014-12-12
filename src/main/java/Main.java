@@ -1,5 +1,6 @@
 import configuration.TraceRestConfiguration;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import traceme.TraceMe;
 
 import java.lang.management.ManagementFactory;
 
@@ -48,6 +49,7 @@ public class Main {
 //    }
 
     public static void main(String[] args) throws InterruptedException {
+        final TraceMe tm = new TraceMe();
         final AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
         ctx.register(TraceRestConfiguration.class);
         ctx.refresh();
@@ -78,7 +80,8 @@ public class Main {
 
         System.out.println("Running ...");
         while(true) {
-            Thread.sleep(60000);
+            tm.someMethod(System.currentTimeMillis());
+            Thread.sleep(5000);
         }
     }
 }
